@@ -6,12 +6,16 @@ import android.app.admin.DevicePolicyManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageInfo
 import android.content.pm.PackageInstaller
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.snackbar.Snackbar
+import com.ixuea.android.downloader.DownloadService
+import com.ixuea.android.downloader.domain.DownloadInfo
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.File
 import java.io.FileOutputStream
@@ -20,14 +24,22 @@ import java.net.URL
 
 class MainActivity : AppCompatActivity() {
 
+    lateinit var fileName : String
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        fileName = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).toString() + "/a.apk"
+
         button.setOnClickListener {
-            startDownload("https://github.com/ConstantineMars/AutoUpdaterDemo/blob/master/apk/1.2.apk?raw=true",
-                "newupdate.apk"
-            ) }
+            download("https://github.com/ConstantineMars/AutoUpdaterDemo/raw/master/apk/1.2.apk",
+                 fileName )
+        }
+
+        button2.setOnClickListener {
+            install(this, getApplicationContext().getPackageName(), fileName)
+        }
     }
 
     fun removeAdmin() {
@@ -36,7 +48,6 @@ class MainActivity : AppCompatActivity() {
         dpm.removeActiveAdmin(cn)
     }
 
-    fun update() {
         fun install(context: Context, packageName: String, apkPath: String) {
 
             // PackageManager provides an instance of PackageInstaller
@@ -63,24 +74,24 @@ class MainActivity : AppCompatActivity() {
                 PendingIntent.getBroadcast(context, sessionId,
                 Intent("android.intent.action.MAIN"), 0).intentSender)
         }
-    }
-
-    fun download(link: String, path: String) {
-        Thread {
-            URL(link).openStream().use { input ->
-                FileOutputStream(File(path)).use { output ->
-                    input.copyTo(output)
-                    Snackbar.make(findViewById(R.id.content), "Done", Snackbar.LENGTH_LONG)
-                }
-            }
-
-    //            runOnUiThread({
-    //                //Update UI
-    //            })
-        }.start()
 
 
-    }
+//    fun download(link: String, path: String) {
+//        Thread {
+//            URL(link).openStream().use { input ->
+//                FileOutputStream(File(path)).use { output ->
+//                    input.copyTo(output)
+//                    Snackbar.make(findViewById(R.id.content), "Done", Snackbar.LENGTH_LONG)
+//                }
+//            }
+//
+//    //            runOnUiThread({
+//    //                //Update UI
+//    //            })
+//        }.start()
+//
+//
+//    }
 
     fun downloadFile(
         url: String,
@@ -114,27 +125,35 @@ class MainActivity : AppCompatActivity() {
         downloadManager .enqueue(request)
     }
 
-    private fun startDownload(
-        downloadPath: String,
-        destinationPath: String
-    ) {
-        val uri =
-            Uri.parse(downloadPath) // Path where you want to download file.
-        val request = DownloadManager.Request(uri)
-        request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_MOBILE or DownloadManager.Request.NETWORK_WIFI) // Tell on which network you want to download file.
-        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED) // This will show notification on top when downloading the file.
-        request.setTitle("Downloading a file") // Title for notification.
-        request.setVisibleInDownloadsUi(true)
-        request.setMimeType("application/vnd.android.package-archive");
-        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS,destinationPath)
-
-//        request.setDestinationInExternalPublicDir(
-//            destinationPath,
-//            uri.lastPathSegment
-//        ) // Storage directory path
-        (getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager).enqueue(
-            request
-        ) // This will start downloading
+    fun download(url: String, file: String) {
+        val downloadManager = DownloadService.getDownloadManager(getApplicationContext());
+        val downloadInfo = DownloadInfo.Builder().setUrl(url)
+            .setPath(file)
+            .build()
+        downloadManager.download(downloadInfo);
     }
+
+//    private fun startDownload(
+//        downloadPath: String,
+//        destinationPath: String
+//    ) {
+//        val uri =
+//            Uri.parse(downloadPath) // Path where you want to download file.
+//        val request = DownloadManager.Request(uri)
+//        request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_MOBILE or DownloadManager.Request.NETWORK_WIFI) // Tell on which network you want to download file.
+//        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED) // This will show notification on top when downloading the file.
+//        request.setTitle("Downloading a file") // Title for notification.
+//        request.setVisibleInDownloadsUi(true)
+//        request.setMimeType("application/vnd.android.package-archive");
+//        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS,destinationPath)
+//
+////        request.setDestinationInExternalPublicDir(
+////            destinationPath,
+////            uri.lastPathSegment
+////        ) // Storage directory path
+//        (getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager).enqueue(
+//            request
+//        ) // This will start downloading
+//    }
 
 }
