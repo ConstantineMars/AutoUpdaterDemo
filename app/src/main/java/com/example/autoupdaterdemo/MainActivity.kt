@@ -33,7 +33,7 @@ class MainActivity : AppCompatActivity() {
         fileName = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).toString() + "/a.apk"
 
         button.setOnClickListener {
-            download("https://github.com/ConstantineMars/AutoUpdaterDemo/raw/master/apk/1.5.apk",
+            download("https://github.com/ConstantineMars/AutoUpdaterDemo/raw/master/apk/update.apk",
                  fileName )
         }
 
